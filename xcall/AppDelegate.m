@@ -86,7 +86,8 @@
 	
 	// Add newline, to have shell prompt on a new line
 	output = [output stringByAppendingString: @"\n"];
-	
+    NSLog(@"Output is %s", [output UTF8String]);
+    
 	// Write to stdout/stderr
 	BOOL success = [output writeToFile:target atomically:NO encoding:NSUTF8StringEncoding error:NULL];
 	NSAssert(success, @"Error writing to %@.", target);
@@ -129,7 +130,9 @@
         if (error) {
             items[queryItem.name] = queryItem.value ?: NSNull.null;
         } else {
-            items[queryItem.name] = object;
+            NSLog(@"Object is: %@", object);
+            [items setObject:object forKey:queryItem.name];
+//            items[queryItem.name] = object;
         }
 //        NSError *error = nil;
 //        NSData *data = [queryItem.value dataUsingEncoding:NSUTF8StringEncoding];
@@ -143,6 +146,7 @@
     
 	// Convert to JSON string
 	NSData *data = [NSJSONSerialization dataWithJSONObject:items options:NSJSONWritingPrettyPrinted error:NULL];
+    NSLog(@"Data is: %@", data);
 	return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }
 
