@@ -58,6 +58,12 @@
 	NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:YES];
 	NSString *actionName = components.path.lastPathComponent;
 	
+//    NSString *query = [components query];
+//    NSLog(@"query:\n%s\n", [query UTF8String]);
+//    NSLog(@"");
+//    NSLog(@"-------");
+//    NSLog(@"");
+//    NSLog(@"query items length: %d\n", (int)[components.queryItems count]);
 	
 	// Convert URL response parameters to JSON, set exit code
 	NSString *target;
@@ -113,9 +119,28 @@
 	NSMutableDictionary *items = [NSMutableDictionary new];
 
 	// Convert each query item to a key/value pair
-	for (NSURLQueryItem *queryItem in queryItems)
-		items[queryItem.name] = queryItem.value ?: NSNull.null;
-	
+    for (NSURLQueryItem *queryItem in queryItems) {
+        // queryItem.value may be a JSON object, so attempt to deserialize from JSON first
+        // see: https://github.com/martinfinke/xcall/issues/8
+        // How do I JSON? https://stackoverflow.com/a/7794561
+        NSData *data = [queryItem.value dataUsingEncoding:NSUTF8StringEncoding];
+        NSError *error = nil;
+        id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+        if (error) {
+            items[queryItem.name] = queryItem.value ?: NSNull.null;
+        } else {
+            items[queryItem.name] = object;
+        }
+//        NSError *error = nil;
+//        NSData *data = [queryItem.value dataUsingEncoding:NSUTF8StringEncoding];
+//        id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+//        if (error) {
+//            items[queryItem.name] = queryItem.value ?: NSNull.null;
+//        } else if ([object isKindOfClass:[NSDictionary class]]) {
+//            items[queryItem.name] = object;
+//        }
+    }
+    
 	// Convert to JSON string
 	NSData *data = [NSJSONSerialization dataWithJSONObject:items options:NSJSONWritingPrettyPrinted error:NULL];
 	return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
